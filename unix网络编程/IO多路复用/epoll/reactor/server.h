@@ -14,9 +14,8 @@ struct my_event{
 	void (*call_back)(int epfd, void *arg);
 	int status;	//指示是否被注册到epoll红黑树中
 	char buf[BUFSIZE];
-	int buflen;
+	int datalen;
 	long last_active;	//?
-
 };
 
 void event_set(struct my_event *myevent, int confd,

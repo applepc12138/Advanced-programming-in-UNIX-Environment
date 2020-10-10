@@ -28,18 +28,23 @@ void event_set(struct my_event *myevent, int confd,
 		void (*cb)(int epfd, void *arg),
 		void *arg)
 {
+	// printf("access event_set\n");
 	myevent->fd = confd;
 	myevent->event = event;
 	myevent->call_back = cb;
 	myevent->status = 0;
-	bzero(myevent->buf, sizeof(myevent->buf));
-	myevent->buflen = 0;
+	if(myevent->datalen <= 0){
+		bzero(myevent->buf, sizeof(myevent->buf));
+		myevent->datalen = 0;
+	}
 	myevent->last_active = time(NULL);//调用此函数的时间
+	//) printf("return form event_set\n");
 }
 
 //注册event到红黑树中
 void event_add(int epfd, struct my_event *ev)
 {
+	// printf("access event_add\n");
 	struct epoll_event epv = {0, {0}};
 	epv.data.ptr = ev;
 	epv.events = ev->event;
@@ -49,11 +54,17 @@ void event_add(int epfd, struct my_event *ev)
 	else 
 		op = EPOLL_CTL_MOD;
 	
+	// printf("confd : %d\t event : %s\t \nbuf : %s\n",
+			// ev->fd, 
+			// (ev->event & EPOLLIN ? "EPOLLIN" : "EPOLLOUT"),
+			// ev->buf);
+
 	if(epoll_ctl(epfd, op, ev->fd, &epv) < 0){
 		perror("epoll_ctl fail\n");
 		exit(1);
 	}
 	ev->status = 1;
+	// printf("return form event_add\n");
 }
 
 //将事件从红黑树中删除
@@ -66,8 +77,12 @@ void event_del(int epfd, struct my_event *ev)
 //回调函数，由工作线程调用
 void senddata(int epfd, void *arg)
 {
+	printf("access senddata\n");
 	struct my_event *ev = (struct my_event *)arg;
-	int len = send(ev->fd, ev->buf, ev->buflen, 0);
+	printf("in senddata ev : %p \n", ev);
+	printf("in senddata func\t buf:%s\tbuflen:%d\n",
+			ev->buf, ev->datalen);
+	int len = send(ev->fd, ev->buf, ev->datalen, 0);
 	if(len < 0){
 		perror("send data fail");
 		exit(1);
@@ -77,13 +92,21 @@ void senddata(int epfd, void *arg)
 	event_set(ev, ev->fd, EPOLLIN, 
 			recvdata, ev->arg);
 	event_add(epfd, ev);
+	printf("reutrn form senddata\n");
 }
 
 //回调函数，由工作线程调用
 void recvdata(int epfd, void *arg)
 {
+	// printf("access recvdata\n");
 	struct my_event *ev = (struct my_event *)arg;
-	int len = recv(epfd, ev->buf, ev->buflen, 0);
+	printf("in recvdata ev : %p \n", ev);
+	int len = recv(ev->fd, ev->buf, sizeof(ev->buf), 0);
+	printf("confd : %d\t event : %s\t \nbuf : %s\n",
+			ev->fd, 
+			(ev->event & EPOLLIN ? "EPOLLIN" : "EPOLLOUT"),
+			ev->buf);
+
 	if(len < 0){
 		perror("recv fail\n");
 		exit(1);
@@ -95,18 +118,22 @@ void recvdata(int epfd, void *arg)
 	for(int i = 0; i < len; ++i)
 		ev->buf[i] = toupper(ev->buf[i]);
 	ev->buf[len] = '\0';
-	ev->buflen = len;
+	ev->datalen = len;
+
+	printf("buf : %s\n", ev->buf);
 
 	event_del(epfd, ev);
 	//注册写事件到红黑树
 	event_set(ev, ev->fd, EPOLLOUT, 
 			senddata, ev->arg);
 	event_add(epfd, ev);
+	// printf("return form recvdata\n");
 }
 
 //回调函数，工作线程调用
 void acceptconnect(int epfd, void *arg)
 {
+	// printf("access acceptconnect\n");
 	struct my_event *ev = (struct my_event *)arg;
 	struct sockaddr_in clientsock;
 	socklen_t clientsocklen = sizeof(clientsock);
@@ -127,7 +154,7 @@ void acceptconnect(int epfd, void *arg)
 	}
 	int i = 0;
 	for(; i < MAX_EVENTS; ++i){
-		if(events[i].status == 1)
+		if(events[i].status == 0)
 			break;
 	}
 	if(i == MAX_EVENTS){
@@ -135,9 +162,12 @@ void acceptconnect(int epfd, void *arg)
 		exit(1);
 	}
 	//将confd添加到红黑树中
-	event_set(&events[i], confd, EPOLLIN, recvdata, 
+	event_set(&events[i], confd,
+			EPOLLIN | EPOLLET,
+			recvdata, 
 			&events[i]);
 	event_add(epfd, &events[i]);
+	// printf("return form acceptconnect\n");
 }
 
 void initserversock(int epfd, short port)
@@ -164,7 +194,8 @@ void initserversock(int epfd, short port)
 	listen(listenfd, 128);
 
 	//将listenfd注册到红黑树中
-	event_set(&events[MAX_EVENTS], listenfd, EPOLLIN, 
+	event_set(&events[MAX_EVENTS], listenfd, 
+			EPOLLIN, 
 			acceptconnect, &events[MAX_EVENTS]);
 	
 	event_add(epfd, &events[MAX_EVENTS]);
