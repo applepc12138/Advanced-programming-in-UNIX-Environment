@@ -30,7 +30,7 @@ struct threadpool_t
 {
     pthread_mutex_t lock;               /*用于锁住当前这个结构体体taskpoll*/    
     pthread_mutex_t thread_counter;     /*记录忙状态线程个数*/
-    pthread_cond_t queue_not_full;      /*当任务队列满时，添加任 务的线程阻塞，等待此条件变量*/
+    pthread_cond_t queue_not_full;      /*当任务队列满时，添加任务的线程阻塞，等待此条件变量*/
     pthread_cond_t queue_not_empty;     /*任务队列里不为空时，通知等待任务的线程*/
     pthread_t *threads;                 /*保存工作线程tid的数组,(malloc动态分配)*/
     pthread_t adjust_tid;               /*管理线程tid,管理线程用于判断是否需要增加(减少)线程个数*/
@@ -40,9 +40,9 @@ struct threadpool_t
     int live_thr_num;                   /*当前存活线程个数*/
     int busy_thr_num;                   /*忙状态线程个数*/
     int wait_exit_thr_num;              /*等待要销毁的线程个数*/
-    int queue_front;                    /*队头索引下标*/
-    int queue_rear;                     /*队未索引下标*/
-    int queue_size;                     /*队中元素个数*/
+    int queue_front;                    /*任务队列队头索引下标*/
+    int queue_rear;                     /*任务队列队尾索引下标*/
+    int queue_size;                     /*任务队列中元素个数*/
     int queue_max_size;                 /*队列中最大容纳个数*/
     int shutdown;                       /*线程池使用状态，判断线程池是否需要关闭，true或false*/
 };

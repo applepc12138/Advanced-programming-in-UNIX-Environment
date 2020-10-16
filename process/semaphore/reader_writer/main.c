@@ -21,6 +21,7 @@ int datasize = 0;
 int readcount = 0;
 int flag = 0;
 
+//读者优先
 void *reader(void *arg)
 {
 	while(1){

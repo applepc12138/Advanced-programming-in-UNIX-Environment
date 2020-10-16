@@ -4,6 +4,13 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
+// sigset_t为信号集,可sizeof(sigset_t)察看
+// int sigemptyset(sigset_t *set);
+// int sigfillset(sigset_t *set);
+// int sigaddset(sigset_t *set, int signo);
+// int sigdelset(sigset_t *set, int signo);
+// int sigismember(const sigset_t *set, int signo);
+
 void print_sigset(sigset_t *set)
 {
 	int i;
