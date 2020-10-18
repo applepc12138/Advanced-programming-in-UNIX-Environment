@@ -5,6 +5,9 @@
 	> Created Time: 2020年10月16日 星期五 18时09分22秒
  ************************************************************************/
 
+#ifndef TIMER_LIST_H
+#define TIMER_LIST_H
+
 #include <iostream>
 #include <unistd.h>
 #include <fcntl.h>
@@ -17,6 +20,8 @@
 class MyTimer;
 
 //当服务器接受新连接后保存的客户端信息
+//client_data *users = new client_data[1024];
+//可用于服务器程序存放连接客户端信息
 struct client_data{
 	struct sockaddr_in addr;
 	int confd;
@@ -34,14 +39,17 @@ class MyTimer{
 		MyTimer(){}
 		MyTimer(MyTimer *pre, MyTimer *next):
 			_pre(pre), _next(next){}
-		MyTimer(time_t et, cbptr cb):
-			expireTime(et), call_back{cb}{}
+		MyTimer(time_t et, cbptr cb, client_data *arg):
+			expireTime(et), call_back{cb}, user_data(arg){}
 		~MyTimer(){}
+
+	public:
+		void setExpireTime(time_t t);
 
 	private:
 		time_t expireTime;//超时时间(绝对时间)
 		cbptr call_back;
-		client_data *user_data;
+		client_data *user_data;//回调函数需要的信息
 		MyTimer *_pre = nullptr;
 		MyTimer *_next = nullptr;
 };
@@ -66,3 +74,5 @@ class TimerList{
 		MyTimer *head = nullptr;
 		MyTimer *tail = nullptr;
 };
+
+#endif

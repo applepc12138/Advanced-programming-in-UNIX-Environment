@@ -7,6 +7,11 @@
 
 #include "timer_list.h"
 
+
+void MyTimer::setExpireTime(time_t t){
+	expireTime = t;
+}
+
 void TimerList::addTimer(MyTimer *timer){
 	if(timer == nullptr)
 		return;
@@ -17,6 +22,7 @@ void TimerList::addTimer(MyTimer *timer){
 	if(timer->expireTime < head->expireTime){
 		timer->_next = head;
 		head = timer;
+		head->_pre = nullptr;
 	}
 	else 
 		addTimer(head, timer);
@@ -89,6 +95,7 @@ void TimerList::adjust(MyTimer *timer){
 	}
 	
 }
+
 
 void TimerList::tick(){
 	//定时器每隔固定时间发出信号,信号处理函数接收信号后利用

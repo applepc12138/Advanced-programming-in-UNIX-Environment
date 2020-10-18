@@ -7,6 +7,9 @@
 
 #include <stdio.h>
 #include <signal.h>
+#include <errno.h>
+#include <unistd.h>
+#include <string.h>
 
 // int sigaction(int signum, const struct sigaction *act,struct sigaction *oldact);
 // struct sigaction {
@@ -22,8 +25,32 @@
 // sa_flags : SA_SIGINFO 或者 0
 // sa_restorer : 保留，已过时
 
+void sig_handler(int sig)
+{
+	printf("Got a SIGINT signal\n");
+}
+
 int main(int argc, char *argv[])
 {
-
+	char buf[1024];
+	int n; 
+	struct sigaction act;
+	act.sa_handler = sig_handler;
+	// act.sa_flags |= SA_RESTART;
+	sigemptyset(&act.sa_mask);
+	sigaction(SIGINT, &act, NULL);
+	while(1){
+		bzero(buf, sizeof(buf));
+		if((n = read(STDIN_FILENO, buf, sizeof(buf))) < 0){
+			if(errno == EINTR){
+				perror("read interrupt by SIGINT");
+				continue;
+			}
+		}
+		if(buf[0] == 'q' || buf[0] == 'Q')
+			break;
+		printf("Got data:%s\n", buf);
+	}
+	// sigaction(SIGINT, &act)
 	return 0;
 }

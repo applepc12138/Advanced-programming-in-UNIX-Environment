@@ -20,6 +20,7 @@
 #define MAX_EVENTS 1024
 #define BUFSIZE 4096
 
+//服务器使用此数组的目的???
 struct my_event events[MAX_EVENTS+1];
 
 //构造一个my_event
