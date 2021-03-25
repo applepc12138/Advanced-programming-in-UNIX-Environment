@@ -130,7 +130,7 @@ int threadpool_add(struct threadpool_t *pool, void*(*function)(void *arg), void 
 {
     pthread_mutex_lock(&(pool->lock));
 
-    while ((pool->queue_size == pool->queue_max_size) && (!pool->shutdown))
+    while ((pool->queue_size == pool->queue_max_size) && (!pool->shutdown))//任务队列已满
     {
         pthread_cond_wait(&(pool->queue_not_full), &(pool->lock));
     }
@@ -168,7 +168,7 @@ void *threadpool_thread(void *threadpool)
         /*刚创建出线程，等待任务队列里有任务，否则阻塞等待任务队列里有任务后再唤醒接收任务*/
         pthread_mutex_lock(&(pool->lock));
 
-        while ((pool->queue_size == 0) && (!pool->shutdown))
+        while ((pool->queue_size == 0) && (!pool->shutdown))//任务队列为空
         {
             printf("thread 0x%x is waiting\n", (unsigned int)pthread_self());
             pthread_cond_wait(&(pool->queue_not_empty), &(pool->lock));
@@ -288,10 +288,11 @@ int threadpool_destroy(struct threadpool_t *pool)
     pool->shutdown = true;
     /*先销毁管理线程*/
     pthread_join(pool->adjust_tid, NULL);
+	pthread_join(pool_)
+	pthread_cond_broadcast(&(pool->queue_not_empty));
     for (i = 0; i < pool->live_thr_num; i++)
     {
         /*通知所有的空闲线程*/
-        pthread_cond_broadcast(&(pool->queue_not_empty));
         pthread_join(pool->threads[i], NULL);
     }
     threadpool_free(pool);

@@ -73,6 +73,7 @@ void TimerList::deleteTimer(MyTimer *timer){
 	}
 }
 
+//只考虑timer的超时时间需要延长的情况，即timer需要向链表尾部移动
 void TimerList::adjust(MyTimer *timer){
 	if(timer == nullptr)
 		return;

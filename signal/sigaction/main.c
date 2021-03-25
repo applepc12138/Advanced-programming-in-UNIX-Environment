@@ -30,6 +30,11 @@ void sig_handler(int sig)
 	printf("Got a SIGINT signal\n");
 }
 
+void sig_handler_2(int sig)
+{
+	printf("Got a other signal\n");
+}
+
 int main(int argc, char *argv[])
 {
 	char buf[1024];
@@ -37,8 +42,10 @@ int main(int argc, char *argv[])
 	struct sigaction act;
 	act.sa_handler = sig_handler;
 	// act.sa_flags |= SA_RESTART;
+	//未阻塞其他信号
 	sigemptyset(&act.sa_mask);
 	sigaction(SIGINT, &act, NULL);
+	signal()
 	while(1){
 		bzero(buf, sizeof(buf));
 		if((n = read(STDIN_FILENO, buf, sizeof(buf))) < 0){
